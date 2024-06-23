@@ -6,3 +6,7 @@ Based on:
 
 Packer manager: [Lazy](https://github.com/folke/lazy.nvim)
 
+
+Install: 
+tree-sitter-devel
+tree-sitter

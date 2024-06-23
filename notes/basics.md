@@ -4,5 +4,14 @@ Notes:
 leader: " "
 file explorer: leader + pv
 
-:PackerSync (to sync)
+
+Good introduction to lazy plugin system:
+https://lsp-zero.netlify.app/v3.x/tutorial.html
+
+Lazy plugin configuration into files:
+https://dev.to/vonheikemen/lazynvim-plugin-configuration-3opi
+
+Python configuration
+https://www.playfulpython.com/configuring-neovim-as-a-python-ide/
+
 
