@@ -29,7 +29,7 @@ return {
                 "lua_ls",
                 "gopls",
                 "pyright",
-                -- "ruff_lsp",
+                "ruff",
             },
             handlers = {
                 function(server_name) -- default handler (optional)
@@ -52,23 +52,23 @@ return {
                         }
                     }
                 end,
-                -- ["pyright"] = function()
-                --     local lspconfig = require("lspconfig")
-                --     lspconfig.pyright.setup {
-                --         -- capabilities = capabilities,
-                --         settings = {
-                --             pyright = {
-                --                 disableOrganizeImports = true, -- Using Ruff
-                --             },
-                --             python = {
-                --                 analysis = {
-                --                     ignore = { '*' }, -- Using Ruff
-                --                     typeCheckingMode = 'off', -- Using mypy
-                --                 },
-                --             },
-                --         },
-                --     }
-                -- end,
+                ["pyright"] = function()
+                    local lspconfig = require("lspconfig")
+                    lspconfig.pyright.setup {
+                        -- capabilities = capabilities,
+                        settings = {
+                            pyright = {
+                                disableOrganizeImports = true, -- Using Ruff
+                            },
+                            python = {
+                                analysis = {
+                                    ignore = { '*' }, -- Using Ruff
+                                    -- typeCheckingMode = 'off', -- Using mypy
+                                },
+                            },
+                        },
+                    }
+                end,
 
             }
         })
@@ -91,8 +91,8 @@ return {
                 { name = 'nvim_lsp' },
                 { name = 'luasnip' }, -- For luasnip users.
             }, {
-                    { name = 'buffer' },
-                })
+                { name = 'buffer' },
+            })
         })
 
         vim.diagnostic.config({
