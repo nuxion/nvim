@@ -24,6 +24,36 @@ return {
 
         require("fidget").setup({})
         require("mason").setup()
+
+        -- Configure LSP servers using vim.lsp.config (Neovim 0.11+)
+        vim.lsp.config('*', {
+            capabilities = capabilities,
+        })
+
+        vim.lsp.config('lua_ls', {
+            settings = {
+                Lua = {
+                    runtime = { version = "Lua 5.1" },
+                    diagnostics = {
+                        globals = { "bit", "vim", "it", "describe", "before_each", "after_each" },
+                    }
+                }
+            }
+        })
+
+        vim.lsp.config('pyright', {
+            settings = {
+                pyright = {
+                    disableOrganizeImports = true, -- Using Ruff
+                },
+                python = {
+                    analysis = {
+                        ignore = { '*' }, -- Using Ruff
+                    },
+                },
+            },
+        })
+
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls",
@@ -31,46 +61,7 @@ return {
                 "pyright",
                 "ruff",
             },
-            handlers = {
-                function(server_name) -- default handler (optional)
-                    require("lspconfig")[server_name].setup {
-                        capabilities = capabilities
-                    }
-                end,
-
-                ["lua_ls"] = function()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.lua_ls.setup {
-                        capabilities = capabilities,
-                        settings = {
-                            Lua = {
-                                runtime = { version = "Lua 5.1" },
-                                diagnostics = {
-                                    globals = { "bit", "vim", "it", "describe", "before_each", "after_each" },
-                                }
-                            }
-                        }
-                    }
-                end,
-                ["pyright"] = function()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.pyright.setup {
-                        -- capabilities = capabilities,
-                        settings = {
-                            pyright = {
-                                disableOrganizeImports = true, -- Using Ruff
-                            },
-                            python = {
-                                analysis = {
-                                    ignore = { '*' }, -- Using Ruff
-                                    -- typeCheckingMode = 'off', -- Using mypy
-                                },
-                            },
-                        },
-                    }
-                end,
-
-            }
+            automatic_enable = true,
         })
 
         local cmp_select = { behavior = cmp.SelectBehavior.Select }
@@ -96,7 +87,6 @@ return {
         })
 
         vim.diagnostic.config({
-            -- update_in_insert = true,
             float = {
                 focusable = false,
                 style = "minimal",
