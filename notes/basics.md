@@ -5,6 +5,9 @@
 leader: " "
 file explorer: leader + pv
 
+## Showing errors: 
+<leader>tt
+
 ## Handling windows: 
 A window is a viewport on a buffer. In vim to manage windows it is CTRL+w the leading command, that you can follow with several options (in bold those that answer to your question):
 - CTRL+w, v: Opens a new vertical split

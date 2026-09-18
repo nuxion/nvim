@@ -60,6 +60,8 @@ return {
                 "gopls",
                 "pyright",
                 "ruff",
+                "astro",
+                "ts_ls",
             },
             automatic_enable = true,
         })

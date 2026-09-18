@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neovim Keymaps</title>
+<style>
+  :root {
+    --base: #faf4ed;
+    --surface: #fffaf3;
+    --overlay: #f2e9e1;
+    --text: #575279;
+    --subtle: #797593;
+    --muted: #9893a5;
+    --pine: #286983;
+    --foam: #56949f;
+    --iris: #907aa9;
+    --love: #b4637a;
+    --gold: #ea9d34;
+    --border: #dfd9d3;
+    --kbd-bg: #fffaf3;
+    --kbd-shadow: #ddd6ce;
+  }
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --base: #191724;
+      --surface: #1f1d2e;
+      --overlay: #26233a;
+      --text: #e0def4;
+      --subtle: #908caa;
+      --muted: #6e6a86;
+      --pine: #9ccfd8;
+      --foam: #9ccfd8;
+      --iris: #c4a7e7;
+      --love: #eb6f92;
+      --gold: #f6c177;
+      --border: #2e2b3f;
+      --kbd-bg: #26233a;
+      --kbd-shadow: #100f19;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --base: #191724;
+    --surface: #1f1d2e;
+    --overlay: #26233a;
+    --text: #e0def4;
+    --subtle: #908caa;
+    --muted: #6e6a86;
+    --pine: #9ccfd8;
+    --foam: #9ccfd8;
+    --iris: #c4a7e7;
+    --love: #eb6f92;
+    --gold: #f6c177;
+    --border: #2e2b3f;
+    --kbd-bg: #26233a;
+    --kbd-shadow: #100f19;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--base);
+    color: var(--text);
+    font: 15px/1.6 ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, kbd, .mono { font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace; }
+
+  .layout { display: flex; gap: 2.5rem; max-width: 1180px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ---------- sidebar ---------- */
+  nav {
+    width: 210px; flex: none;
+    position: sticky; top: 0; align-self: flex-start;
+    max-height: 100vh; overflow-y: auto;
+    padding: 2.5rem 0 3rem;
+  }
+  nav .nav-title {
+    font-size: .68rem; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: .85rem;
+  }
+  nav a {
+    display: block; padding: .3rem .6rem; margin-left: -.6rem;
+    color: var(--subtle); text-decoration: none; border-radius: 5px;
+    font-size: .875rem;
+  }
+  nav a:hover { color: var(--text); background: var(--overlay); }
+
+  /* ---------- main ---------- */
+  main { flex: 1; min-width: 0; padding: 2.5rem 0 5rem; }
+  header { margin-bottom: 2.25rem; }
+  h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 .5rem; letter-spacing: -.02em; }
+  .lede { color: var(--subtle); margin: 0; max-width: 60ch; }
+  .lede code { color: var(--text); }
+
+  h2 {
+    font-size: 1.15rem; margin: 2.75rem 0 .35rem; letter-spacing: -.01em;
+    padding-top: .75rem; border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: none; padding-top: 0; }
+  .section-note { color: var(--subtle); font-size: .875rem; margin: 0 0 1rem; max-width: 65ch; }
+
+  /* ---------- filter ---------- */
+  .toolbar { display: flex; gap: .6rem; align-items: center; margin-bottom: 2rem; }
+  #filter {
+    flex: 1; min-width: 0;
+    padding: .55rem .8rem; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-size: .9rem; font-family: inherit;
+  }
+  #filter:focus { outline: 2px solid var(--iris); outline-offset: -1px; border-color: transparent; }
+  #theme {
+    padding: .55rem .75rem; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--subtle);
+    font-size: .9rem; font-family: inherit;
+  }
+  #theme:hover { color: var(--text); }
+  .empty { display: none; color: var(--muted); font-style: italic; padding: 2rem 0; }
+  body.filtering .empty.show { display: block; }
+
+  /* ---------- table ---------- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th {
+    text-align: left; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; padding: 0 .75rem .5rem 0; white-space: nowrap;
+  }
+  td { padding: .6rem .75rem .6rem 0; border-top: 1px solid var(--border); vertical-align: baseline; }
+  tr:hover td { background: var(--surface); }
+  td:first-child, th:first-child { white-space: nowrap; }
+  .col-action { width: 42%; }
+
+  kbd {
+    display: inline-block;
+    background: var(--kbd-bg); border: 1px solid var(--border);
+    border-bottom-width: 2px; border-radius: 5px;
+    padding: .1rem .38rem; font-size: .82rem; color: var(--text);
+    white-space: nowrap;
+  }
+  .seq { color: var(--muted); margin: 0 .15rem; font-size: .8rem; }
+  .mode {
+    font-size: .68rem; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+
+  .src { display: inline-block; font-size: .78rem; white-space: nowrap; }
+  .src::before {
+    content: ""; display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; margin-right: .45rem; vertical-align: middle;
+    background: currentColor;
+  }
+  .src-core   { color: var(--foam); }
+  .src-plugin { color: var(--iris); }
+
+  .where { font-size: .8rem; color: var(--subtle); }
+  .where code { color: inherit; }
+
+  /* ---------- callouts ---------- */
+  .callout {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 7px 7px 0; padding: .85rem 1rem; margin: 1.25rem 0;
+    font-size: .875rem; color: var(--subtle);
+  }
+  .callout strong { color: var(--text); }
+  .callout ul { margin: .5rem 0 0; padding-left: 1.1rem; }
+  .callout li { margin: .35rem 0; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: .8rem; color: var(--subtle); margin: 1rem 0 0; }
+
+  footer { margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: .82rem; color: var(--muted); }
+  footer a { color: var(--pine); }
+
+  @media (max-width: 860px) {
+    nav { display: none; }
+    .layout { padding: 0 1.1rem; }
+    .col-action { width: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav>
+  <div class="nav-title">Features</div>
+  <a href="#basics">Basics &amp; leader</a>
+  <a href="#files">Files &amp; search</a>
+  <a href="#marks">Quick marks</a>
+  <a href="#lsp">LSP</a>
+  <a href="#completion">Completion</a>
+  <a href="#diagnostics">Diagnostics</a>
+  <a href="#format">Formatting</a>
+  <a href="#git">Git</a>
+  <a href="#windows">Windows &amp; buffers</a>
+  <a href="#editing">Editing &amp; clipboard</a>
+  <a href="#gotchas">Conflicts &amp; gotchas</a>
+  <a href="#files-map">Where things live</a>
+</nav>
+
+<main>
+<header>
+  <h1>Neovim Keymaps</h1>
+  <p class="lede">Every mapping in this config, grouped by feature. Each row says whether it is <strong>stock Neovim</strong> or comes from a <strong>plugin</strong>, and which file defines it. Leader is <code>&lt;Space&gt;</code>.</p>
+  <div class="legend">
+    <span class="src src-core">Neovim default</span>
+    <span class="src src-plugin">Plugin mapping</span>
+    <span><kbd>⎵</kbd> = Space (leader)</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <input id="filter" type="search" placeholder="Filter keys, actions, plugins…" autocomplete="off" spellcheck="false">
+  <button id="theme" type="button" title="Toggle theme">◐</button>
+</div>
+
+<!-- ============ BASICS ============ -->
+<h2 id="basics">Basics &amp; leader</h2>
+<p class="section-note">The leader key prefixes almost every custom mapping. Netrw is Neovim's built-in file explorer — only the shortcut to it is custom.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>Space</kbd></td><td class="mode">n</td>
+  <td>Leader key</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where"><code>lua/nuxion/remap.lua:1</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd><kbd>v</kbd></td><td class="mode">n</td>
+  <td>Open netrw file explorer (<code>:Ex</code>)</td>
+  <td><span class="src src-core">Neovim</span> <span class="where">(netrw)</span></td>
+  <td class="where"><code>lua/nuxion/remap.lua:2</code></td>
+</tr>
+<tr>
+  <td><kbd>:</kbd></td><td class="mode">n</td>
+  <td>Command line</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>v</kbd><kbd>h</kbd></td><td class="mode">n</td>
+  <td>Search Neovim help tags</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:32</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ FILES ============ -->
+<h2 id="files">Files &amp; search</h2>
+<p class="section-note">Telescope is the fuzzy finder. <code>fzf-lua</code> is also installed but ships no keymaps here — call it with <code>:FzfLua &lt;picker&gt;</code>.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd><kbd>f</kbd></td><td class="mode">n</td>
+  <td>Find files in cwd</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:14</code></td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>p</kbd></td><td class="mode">n</td>
+  <td>Find git-tracked files (untracked included)</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:18</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd><kbd>b</kbd></td><td class="mode">n</td>
+  <td>List open buffers, most recent first</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:15</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd><kbd>g</kbd></td><td class="mode">n</td>
+  <td>Grep — prompts for the search string</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:29</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd><kbd>w</kbd><kbd>s</kbd></td><td class="mode">n</td>
+  <td>Grep the word under the cursor (<code>&lt;cword&gt;</code>)</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:21</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd><kbd>W</kbd><kbd>s</kbd></td><td class="mode">n</td>
+  <td>Grep the WORD under the cursor (<code>&lt;cWORD&gt;</code>, punctuation included)</td>
+  <td><span class="src src-plugin">telescope.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/telescope.lua:25</code></td>
+</tr>
+<tr>
+  <td><kbd>/</kbd> <kbd>?</kbd> <kbd>n</kbd> <kbd>N</kbd></td><td class="mode">n</td>
+  <td>Search in buffer forward / backward, next / previous match</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+<tr>
+  <td><kbd>*</kbd> <kbd>#</kbd></td><td class="mode">n</td>
+  <td>Search word under cursor forward / backward</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="callout">
+<strong>Inside a Telescope prompt:</strong> <kbd>Ctrl</kbd>+<kbd>n</kbd> / <kbd>Ctrl</kbd>+<kbd>p</kbd> move the selection, <kbd>Enter</kbd> opens, <kbd>Ctrl</kbd>+<kbd>x</kbd> / <kbd>Ctrl</kbd>+<kbd>v</kbd> open in a horizontal / vertical split, <kbd>Ctrl</kbd>+<kbd>t</kbd> in a tab, <kbd>Esc</kbd> closes. These are Telescope's defaults — this config passes an empty <code>setup({})</code>.
+</div>
+
+<!-- ============ HARPOON ============ -->
+<h2 id="marks">Quick marks (Harpoon)</h2>
+<p class="section-note">Harpoon v2 pins a short list of files you jump between. The menu is an editable buffer — delete a line to drop a file, then <code>:w</code>/<code>:q</code>.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>a</kbd></td><td class="mode">n</td>
+  <td>Add current file to the Harpoon list</td>
+  <td><span class="src src-plugin">harpoon (harpoon2)</span></td>
+  <td class="where"><code>lua/nuxion/lazy/harpoon.lua:9</code></td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>e</kbd></td><td class="mode">n</td>
+  <td>Toggle the Harpoon quick menu</td>
+  <td><span class="src src-plugin">harpoon (harpoon2)</span></td>
+  <td class="where"><code>lua/nuxion/lazy/harpoon.lua:10</code></td>
+</tr>
+<tr>
+  <td><kbd>m</kbd><span class="seq">+ letter</span> / <kbd>`</kbd><span class="seq">+ letter</span></td><td class="mode">n</td>
+  <td>Set / jump to a classic vim mark</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>o</kbd> / <kbd>Ctrl</kbd>+<kbd>i</kbd></td><td class="mode">n</td>
+  <td>Jumplist back / forward</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="callout">
+<strong>Not mapped:</strong> harpoon's <em>jump to slot 1–4</em> (<code>harpoon:list():select(n)</code>) has no keymap in this config. Add it in <code>lua/nuxion/lazy/harpoon.lua</code> if you want <kbd>⎵</kbd><kbd>1</kbd>…<kbd>4</kbd>-style jumps.
+</div>
+
+<!-- ============ LSP ============ -->
+<h2 id="lsp">LSP</h2>
+<p class="section-note">
+This config sets <strong>no LSP keymaps of its own</strong> — everything below is Neovim 0.11+'s built-in <code>LspAttach</code> defaults, active in any buffer with a language server. Servers are installed by Mason and listed in <code>lua/nuxion/lazy/lsp.lua:57</code>: <code>lua_ls</code>, <code>gopls</code>, <code>pyright</code>, <code>ruff</code>, <code>astro</code>, <code>ts_ls</code>, plus <code>intelephense</code> enabled in <code>init.lua:3</code>.
+</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>K</kbd></td><td class="mode">n</td>
+  <td>Hover documentation</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.10</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>r</kbd><kbd>n</kbd></td><td class="mode">n</td>
+  <td>Rename symbol</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>r</kbd><kbd>a</kbd></td><td class="mode">n, v</td>
+  <td>Code action</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>r</kbd><kbd>r</kbd></td><td class="mode">n</td>
+  <td>List references</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>r</kbd><kbd>i</kbd></td><td class="mode">n</td>
+  <td>Go to implementation</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>r</kbd><kbd>t</kbd></td><td class="mode">n</td>
+  <td>Go to type definition</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>O</kbd></td><td class="mode">n</td>
+  <td>Document symbols</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>d</kbd></td><td class="mode">n</td>
+  <td>Go to definition — LSP-backed via <code>tagfunc</code> when a server is attached</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>s</kbd></td><td class="mode">i</td>
+  <td>Signature help</td>
+  <td><span class="src src-core">Neovim (LSP default)</span></td>
+  <td class="where">built-in, Nvim ≥ 0.11</td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>f</kbd><kbd>f</kbd></td><td class="mode">n</td>
+  <td>Format buffer with the LSP server directly (<code>vim.lsp.buf.format</code>)</td>
+  <td><span class="src src-plugin">custom mapping</span></td>
+  <td class="where"><code>lua/nuxion/remap.lua:4</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ COMPLETION ============ -->
+<h2 id="completion">Completion &amp; snippets</h2>
+<p class="section-note">nvim-cmp with LuaSnip. Sources: LSP, LuaSnip, buffer words. These mappings only apply while the completion popup logic is active, in insert mode.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td class="mode">i</td>
+  <td>Trigger completion</td>
+  <td><span class="src src-plugin">nvim-cmp</span></td>
+  <td class="where"><code>lua/nuxion/lazy/lsp.lua:81</code></td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>n</kbd></td><td class="mode">i</td>
+  <td>Select next completion item</td>
+  <td><span class="src src-plugin">nvim-cmp</span></td>
+  <td class="where"><code>lua/nuxion/lazy/lsp.lua:79</code></td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>p</kbd></td><td class="mode">i</td>
+  <td>Select previous completion item</td>
+  <td><span class="src src-plugin">nvim-cmp</span></td>
+  <td class="where"><code>lua/nuxion/lazy/lsp.lua:78</code></td>
+</tr>
+<tr>
+  <td><kbd>Enter</kbd></td><td class="mode">i</td>
+  <td>Confirm the selected item</td>
+  <td><span class="src src-plugin">nvim-cmp</span></td>
+  <td class="where"><code>lua/nuxion/lazy/lsp.lua:80</code></td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>e</kbd></td><td class="mode">i</td>
+  <td>Abort the completion popup</td>
+  <td><span class="src src-plugin">nvim-cmp</span> <span class="where">(preset default)</span></td>
+  <td class="where"><code>cmp.mapping.preset.insert</code>, lsp.lua:77</td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>x</kbd> <kbd>Ctrl</kbd>+<kbd>f</kbd> / <kbd>Ctrl</kbd>+<kbd>o</kbd></td><td class="mode">i</td>
+  <td>Built-in path / omni completion</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ DIAGNOSTICS ============ -->
+<h2 id="diagnostics">Diagnostics</h2>
+<p class="section-note">Trouble gives the list view; jumping and the float are stock Neovim. Diagnostic floats are configured with a rounded border in <code>lua/nuxion/lazy/lsp.lua:91</code>.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>t</kbd><kbd>t</kbd></td><td class="mode">n</td>
+  <td>Toggle the Trouble diagnostics list and focus it</td>
+  <td><span class="src src-plugin">trouble.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/trouble.lua:28</code></td>
+</tr>
+<tr>
+  <td><kbd>]</kbd><kbd>d</kbd> / <kbd>[</kbd><kbd>d</kbd></td><td class="mode">n</td>
+  <td>Jump to next / previous diagnostic</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in, Nvim ≥ 0.10</td>
+</tr>
+<tr>
+  <td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>d</kbd></td><td class="mode">n</td>
+  <td>Show the diagnostic under the cursor in a float</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in, Nvim ≥ 0.10</td>
+</tr>
+<tr>
+  <td><kbd>]</kbd><kbd>q</kbd> / <kbd>[</kbd><kbd>q</kbd></td><td class="mode">n</td>
+  <td>Next / previous quickfix entry</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="callout">
+<strong>Inside the Trouble window:</strong> <kbd>Enter</kbd> jumps to the item, <kbd>o</kbd> jumps and closes, <kbd>q</kbd> closes, <kbd>Tab</kbd>/<kbd>Shift</kbd>+<kbd>Tab</kbd> fold. Trouble's own defaults — this config only changes appearance (<code>mode = "workspace_diagnostics"</code>, bottom position, height 6).
+</div>
+
+<!-- ============ FORMAT ============ -->
+<h2 id="format">Formatting</h2>
+<p class="section-note">Format-on-save is on with a 500 ms timeout (<code>lua/nuxion/lazy/conform.lua:36</code>). Per filetype: <code>stylua</code> for Lua, <code>ruff</code> for Python, <code>prettierd</code>→<code>prettier</code> for JS/TS/TSX/Astro/CSS/HTML, falling back to the LSP formatter otherwise.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>f</kbd></td><td class="mode">n, v, o</td>
+  <td>Format the buffer asynchronously with conform</td>
+  <td><span class="src src-plugin">conform.nvim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/conform.lua:8</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>f</kbd><kbd>f</kbd></td><td class="mode">n</td>
+  <td>Format via the LSP server, bypassing conform</td>
+  <td><span class="src src-plugin">custom mapping</span></td>
+  <td class="where"><code>lua/nuxion/remap.lua:4</code></td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>q</kbd><span class="seq">+ motion</span></td><td class="mode">n, v</td>
+  <td>Format the motion — routed to conform via <code>formatexpr</code></td>
+  <td><span class="src src-core">Neovim</span> <span class="where">+ conform</span></td>
+  <td class="where"><code>lua/nuxion/lazy/conform.lua:46</code></td>
+</tr>
+<tr>
+  <td><kbd>=</kbd><span class="seq">+ motion</span></td><td class="mode">n, v</td>
+  <td>Re-indent — uses treesitter indent</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where"><code>lua/nuxion/lazy/treesitter.lua:41</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ GIT ============ -->
+<h2 id="git">Git</h2>
+<p class="section-note">Fugitive drives the workflow. <strong>Three of these are buffer-local</strong> — they only exist inside the Fugitive status buffer, set by an autocmd at <code>lua/nuxion/lazy/fugitive.lua:9</code>. gitsigns is installed with defaults (signs in the gutter, no custom keymaps).</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>g</kbd><kbd>s</kbd></td><td class="mode">n</td>
+  <td>Open the Fugitive git status buffer</td>
+  <td><span class="src src-plugin">vim-fugitive</span></td>
+  <td class="where"><code>lua/nuxion/lazy/fugitive.lua:4</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>p</kbd></td><td class="mode">n</td>
+  <td><em>Fugitive buffer only</em> — <code>git push</code></td>
+  <td><span class="src src-plugin">vim-fugitive</span></td>
+  <td class="where"><code>lua/nuxion/lazy/fugitive.lua:19</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>P</kbd></td><td class="mode">n</td>
+  <td><em>Fugitive buffer only</em> — <code>git pull --rebase</code></td>
+  <td><span class="src src-plugin">vim-fugitive</span></td>
+  <td class="where"><code>lua/nuxion/lazy/fugitive.lua:24</code></td>
+</tr>
+<tr>
+  <td><kbd>⎵</kbd><span class="seq">then</span><kbd>t</kbd></td><td class="mode">n</td>
+  <td><em>Fugitive buffer only</em> — prefills <code>:Git push -u origin </code> for you to finish</td>
+  <td><span class="src src-plugin">vim-fugitive</span></td>
+  <td class="where"><code>lua/nuxion/lazy/fugitive.lua:30</code></td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>u</kbd></td><td class="mode">n</td>
+  <td>Merge conflict: take the change from the <strong>target</strong> branch (<code>diffget //2</code>)</td>
+  <td><span class="src src-plugin">vim-fugitive</span></td>
+  <td class="where"><code>lua/nuxion/lazy/fugitive.lua:35</code></td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>h</kbd></td><td class="mode">n</td>
+  <td>Merge conflict: take the change from the <strong>merge</strong> branch (<code>diffget //3</code>)</td>
+  <td><span class="src src-plugin">vim-fugitive</span></td>
+  <td class="where"><code>lua/nuxion/lazy/fugitive.lua:36</code></td>
+</tr>
+<tr>
+  <td><kbd>]</kbd><kbd>c</kbd> / <kbd>[</kbd><kbd>c</kbd></td><td class="mode">n</td>
+  <td>Next / previous diff hunk in diff mode</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="callout">
+<strong>Inside the Fugitive status buffer</strong> (plugin defaults, not configured here): <kbd>s</kbd> stage, <kbd>u</kbd> unstage, <kbd>-</kbd> toggle stage, <kbd>=</kbd> inline diff, <kbd>cc</kbd> commit, <kbd>ca</kbd> amend, <kbd>dv</kbd> vertical diff split, <kbd>g</kbd><kbd>?</kbd> for the full list.<br>
+<strong>gitsigns commands</strong> (no keymaps set): <code>:Gitsigns preview_hunk</code>, <code>reset_hunk</code>, <code>stage_hunk</code>, <code>blame_line</code>.
+</div>
+
+<!-- ============ WINDOWS ============ -->
+<h2 id="windows">Windows &amp; buffers</h2>
+<p class="section-note">All stock Neovim — nothing in this config remaps window or buffer handling. A window is a viewport onto a buffer; <kbd>Ctrl</kbd>+<kbd>w</kbd> is the prefix for all of it.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>v</kbd></td><td class="mode">n</td><td>Vertical split</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>s</kbd></td><td class="mode">n</td><td>Horizontal split</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>c</kbd></td><td class="mode">n</td><td>Close the window, keep the buffer</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>o</kbd></td><td class="mode">n</td><td>Close every other window</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd></td><td class="mode">n</td><td>Move focus left / down / up / right</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>r</kbd></td><td class="mode">n</td><td>Rotate windows</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd><span class="seq">then</span><kbd>=</kbd></td><td class="mode">n</td><td>Equalise split sizes</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>^</kbd></td><td class="mode">n</td><td>Toggle to the alternate buffer</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+<tr><td><code>:ls</code> · <code>:b N</code> · <code>:bd</code></td><td class="mode">c</td><td>List buffers · switch to buffer N · delete buffer</td><td><span class="src src-core">Neovim</span></td><td class="where">built-in</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ EDITING ============ -->
+<h2 id="editing">Editing &amp; clipboard</h2>
+<p class="section-note">
+<code>clipboard = "unnamedplus"</code> (<code>lua/nuxion/set.lua:11</code>) means every yank and delete already goes to the system clipboard — no <code>"+</code> prefix needed. The provider is picked at startup in <code>init.lua:5</code>: <code>wl-clipboard</code> under Wayland, <code>xclip</code> otherwise.
+</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Keys</th><th>Mode</th><th class="col-action">Action</th><th>Source</th><th>Defined in</th></tr></thead>
+<tbody>
+<tr>
+  <td><kbd>c</kbd><kbd>p</kbd></td><td class="mode">n</td>
+  <td>Copy the current file's absolute path to the system clipboard and the unnamed register</td>
+  <td><span class="src src-plugin">custom mapping</span></td>
+  <td class="where"><code>lua/nuxion/remap.lua:7</code></td>
+</tr>
+<tr>
+  <td><kbd>y</kbd> / <kbd>d</kbd> / <kbd>p</kbd></td><td class="mode">n, v</td>
+  <td>Yank / delete / paste — system clipboard by default here</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where"><code>lua/nuxion/set.lua:11</code></td>
+</tr>
+<tr>
+  <td><kbd>g</kbd><kbd>c</kbd><kbd>c</kbd> / <kbd>g</kbd><kbd>c</kbd><span class="seq">+ motion</span></td><td class="mode">n, v</td>
+  <td>Toggle comment on the line / motion</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in, Nvim ≥ 0.10</td>
+</tr>
+<tr>
+  <td><kbd>u</kbd> / <kbd>Ctrl</kbd>+<kbd>r</kbd></td><td class="mode">n</td>
+  <td>Undo / redo</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where">built-in</td>
+</tr>
+<tr>
+  <td><kbd>&gt;</kbd><kbd>&gt;</kbd> / <kbd>&lt;</kbd><kbd>&lt;</kbd></td><td class="mode">n, v</td>
+  <td>Indent / outdent by 4 spaces (<code>expandtab</code>, <code>shiftwidth=4</code>)</td>
+  <td><span class="src src-core">Neovim</span></td>
+  <td class="where"><code>lua/nuxion/set.lua:6–9</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ GOTCHAS ============ -->
+<h2 id="gotchas">Conflicts &amp; gotchas</h2>
+<div class="callout">
+<ul>
+<li><strong><kbd>⎵</kbd><kbd>f</kbd> vs <kbd>⎵</kbd><kbd>f</kbd><kbd>f</kbd></strong> — conform waits for <code>timeoutlen</code> (default 1000 ms) before firing <kbd>⎵</kbd><kbd>f</kbd>, because <kbd>⎵</kbd><kbd>f</kbd><kbd>f</kbd> is a longer mapping. Pause deliberately, or drop one of them.</li>
+<li><strong><kbd>⎵</kbd><kbd>t</kbd> vs <kbd>⎵</kbd><kbd>t</kbd><kbd>t</kbd></strong> — same story inside a Fugitive buffer: <kbd>⎵</kbd><kbd>t</kbd> (push -u origin) delays until the timeout because Trouble owns <kbd>⎵</kbd><kbd>t</kbd><kbd>t</kbd>.</li>
+<li><strong><kbd>⎵</kbd><kbd>p</kbd> vs <kbd>⎵</kbd><kbd>p</kbd><kbd>f</kbd>/<kbd>p</kbd><kbd>g</kbd>/…</strong> — inside a Fugitive buffer, <kbd>⎵</kbd><kbd>p</kbd> (push) shadows the Telescope <kbd>⎵</kbd><kbd>p</kbd>… prefix until the timeout elapses. Outside Fugitive, the Telescope maps work normally.</li>
+<li><strong><kbd>Ctrl</kbd>+<kbd>p</kbd></strong> means git-files in normal mode, but <em>previous completion item</em> in insert mode. No real conflict — different modes.</li>
+<li><strong><kbd>Ctrl</kbd>+<kbd>e</kbd></strong> is Harpoon's menu in normal mode and cmp's abort in insert mode. Also different modes.</li>
+<li><strong>Format on save can fight <kbd>⎵</kbd><kbd>f</kbd><kbd>f</kbd></strong> — <code>vim.lsp.buf.format</code> and conform may disagree for filetypes where both are available (Python: ruff via both paths).</li>
+</ul>
+</div>
+
+<!-- ============ FILE MAP ============ -->
+<h2 id="files-map">Where things live</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>File</th><th class="col-action">What it defines</th><th>Mappings</th></tr></thead>
+<tbody>
+<tr><td class="mono">init.lua</td><td>Entry point, intelephense LSP, clipboard provider</td><td class="where">—</td></tr>
+<tr><td class="mono">lua/nuxion/set.lua</td><td>Vim options: tabs, relative numbers, clipboard, filetypes</td><td class="where">—</td></tr>
+<tr><td class="mono">lua/nuxion/remap.lua</td><td>Leader key and global mappings</td><td class="where">3</td></tr>
+<tr><td class="mono">lua/nuxion/lazy_init.lua</td><td>Bootstraps lazy.nvim, loads specs from <code>lazy/</code></td><td class="where">—</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/telescope.lua</td><td>Fuzzy finding</td><td class="where">7</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/harpoon.lua</td><td>Quick file marks</td><td class="where">2</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/fugitive.lua</td><td>Git — 3 of its maps are buffer-local</td><td class="where">6</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/trouble.lua</td><td>Diagnostics list</td><td class="where">1</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/conform.lua</td><td>Formatters, format-on-save</td><td class="where">1</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/lsp.lua</td><td>Mason, LSP servers, nvim-cmp</td><td class="where">4 (cmp)</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/gitsigns.lua</td><td>Git gutter signs — defaults only</td><td class="where">0</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/fzf.lua</td><td>fzf-lua — installed, no keymaps</td><td class="where">0</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/treesitter.lua</td><td>Parsers, highlight, indent</td><td class="where">0</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/colors.lua</td><td>rose-pine, transparent background</td><td class="where">0</td></tr>
+<tr><td class="mono">lua/nuxion/lazy/web-devicons.lua</td><td>Icons for telescope / trouble / fzf</td><td class="where">0</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="empty">No mapping matches that filter.</p>
+
+<footer>
+  Generated from the config in <code>~/.config/nvim</code>. Neovim defaults reflect 0.11+ — check <code>:help lsp-defaults</code> and <code>:help default-mappings</code> for your version, and <code>:verbose map &lt;keys&gt;</code> to see what actually owns a binding.
+</footer>
+
+</main>
+</div>
+
+<script>
+(function () {
+  var filter = document.getElementById('filter');
+  var empty = document.querySelector('.empty');
+
+  filter.addEventListener('input', function () {
+    var q = filter.value.trim().toLowerCase();
+    document.body.classList.toggle('filtering', q.length > 0);
+    var anyVisible = false;
+
+    document.querySelectorAll('main table').forEach(function (table) {
+      var shown = 0;
+      table.querySelectorAll('tbody tr').forEach(function (row) {
+        var hit = !q || row.textContent.toLowerCase().indexOf(q) !== -1;
+        row.style.display = hit ? '' : 'none';
+        if (hit) shown++;
+      });
+      var section = table.closest('.table-wrap');
+      var hide = q && shown === 0;
+      section.style.display = hide ? 'none' : '';
+      var h2 = section.previousElementSibling;
+      while (h2 && h2.tagName !== 'H2') h2 = h2.previousElementSibling;
+      if (h2) h2.style.display = hide ? 'none' : '';
+      var note = section.previousElementSibling;
+      if (note && note.classList.contains('section-note')) note.style.display = hide ? 'none' : '';
+      if (!hide) anyVisible = true;
+    });
+
+    document.querySelectorAll('main .callout').forEach(function (c) {
+      c.style.display = q ? 'none' : '';
+    });
+    empty.classList.toggle('show', !!q && !anyVisible);
+  });
+
+  var theme = document.getElementById('theme');
+  theme.addEventListener('click', function () {
+    var root = document.documentElement;
+    var current = root.getAttribute('data-theme');
+    if (!current) {
+      var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      current = dark ? 'dark' : 'light';
+    }
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('nvim-keymaps-theme', next); } catch (e) {}
+  });
+
+  try {
+    var saved = localStorage.getItem('nvim-keymaps-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
